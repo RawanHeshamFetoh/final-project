@@ -35,11 +35,7 @@ const CategoryNav = () => {
         e.stopPropagation();
         setShowCategoriesDropdown(!showCategoriesDropdown);
     };
-    // const handleOutsideClick = (e) => {
-    //     if (!e.target.closest(`.${styles.categoryDropdown}`)) {
-    //         setShowCategoriesDropdown((prevState) => !prevState); // Close dropdown if clicked outside
-    //     }
-    // };
+    
     const handleOutsideClick = (e) => {
         if (!e.target.closest(`.${styles.categoryDropdown}`)) {
             setShowCategoriesDropdown(false);

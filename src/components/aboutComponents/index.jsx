@@ -2,7 +2,6 @@ import React from "react";
 import styles from "./aboutComponent.module.css";
 
 const AboutComponents = ({ head, paragraph ,image}) => {
-  // console.log(image)
   return (
     <div className={` col-6  col-md-3 `}>
       <div className={` d-flex align-items-center `}>

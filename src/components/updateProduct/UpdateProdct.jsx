@@ -88,8 +88,8 @@ const UpdateProduct = () => {
     }
 
     const validationSchema = Yup.object({
-        title: Yup.string().required("Required").min(3, "Invalid Product name").max(100, "Invalid Product name"),
-        description: Yup.string().required("Required").min(3, "Invalid description"),
+        title: Yup.string().required("Required").min(3, "Invalid Product name").max(100, "Invalid Product name").trim(),
+        description: Yup.string().required("Required").min(3, "Invalid description").trim(),
         price: Yup.number().required("Required").positive("Not valid price"),
         priceAfterDisc: Yup.number(),
         discount: Yup.number().min(0).max(100),

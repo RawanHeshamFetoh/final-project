@@ -8,6 +8,7 @@ import Cookies from 'js-cookie'
 
 const SellerProducts = () => {
     const [pageNumber, setPageNumber] = useState(1);
+    const [productNumber,setProductsNumber]= useState(0);
     const [products, setProducts] = useState([]);
     const userId = Cookies.get('userId');
     const getProducts = async (pageNumber) => {
@@ -15,13 +16,15 @@ const SellerProducts = () => {
         // const response = await axios.get(`http://localhost:3000/api/v1/products/`, {
             withCredentials: true,
         });
+        console.log(response.data)
         return response.data;
     };
     const { isLoading, isError, error, data } = useQuery(['products', pageNumber], () => getProducts(pageNumber), {
         onError: (err) => console.error(err),
         onSuccess: (res) => {
             // const userId = Cookies.get("userId");
-            console.log(res.data)
+            console.log(res.data.lenght ,"ppppp")
+            // setProducts(res.data.lenght)
             // const fullProducts = res.data.documents.filter(product => product.sellerId === userId)
             // setProducts(fullProducts)
             setProducts(res.data.documents)
@@ -33,6 +36,8 @@ const SellerProducts = () => {
     if (isError) return <div>Error: {error.message}</div>;
 
     const numberOfPage = data?.paginateResult.NumOfPages || 1;
+    const disableNext = data.results / 9 
+    console.log(disableNext)
     console.log(products.length ,"leeeeeeeeeeeeeeen")
     // const numberOfPage =Math.ceil( products?.length / 9 )|| 1;
     return (
@@ -56,7 +61,7 @@ const SellerProducts = () => {
             </div>
             <div className={styles.paginationContainer}>
                 <button className={styles.nextPrevBtn} onClick={() => setPageNumber(prev => Math.max(prev - 1, 1))} disabled={pageNumber === 1}>Prev</button>
-                <button className={styles.nextPrevBtn} onClick={() => setPageNumber(prev => Math.min(prev + 1, numberOfPage))} disabled={pageNumber === numberOfPage}>Next</button>
+                <button className={styles.nextPrevBtn} onClick={() => setPageNumber(prev => Math.min(prev + 1, numberOfPage))} disabled={pageNumber === numberOfPage || disableNext < 1}>Next</button>
             </div>
         </div>
     );

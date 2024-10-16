@@ -41,8 +41,8 @@ const AddProduct = () => {
     };
 
     const validationSchema = Yup.object({
-        title: Yup.string().required("Required").min(3, "Invalid Product name").max(100, "Invalid Product name"),
-        description: Yup.string().required("Required").min(3, "Invalid description"),
+        title: Yup.string().required("Required").min(3, "Invalid Product name").max(100, "Invalid Product name").trim(),
+        description: Yup.string().required("Required").min(3, "Invalid description").trim(),
         price: Yup.number().required("Required").positive("invlid value"),
         priceAfterDisc: Yup.number(),
         discount: Yup.number().min(0, "invalid value").max(90, "invalid value"),
@@ -65,8 +65,6 @@ const AddProduct = () => {
                 images:[...multiImagesCopy],
                 sellerId: userId
             }
-            console.log(updatedValue);
-            console.log(updatedValue.category)
             mutation.mutate(updatedValue)
 
         } else {
@@ -87,7 +85,7 @@ const AddProduct = () => {
             navigate('/profile/' + userId + '/seller-products');
         },
         onError: (err) => {
-            console.log(err);
+            
             toast.error("Failed to add product!");
         },
     })
@@ -102,14 +100,14 @@ const AddProduct = () => {
     }
     const { data: categories } = useQuery('get-categories', getAllCategoires, {
         onSuccess: (res) => {
-            console.log(res.data.documents)
+            
             const fetchMainCategories = res.data.documents.map((category) => {
                 return { key: category.name, value: category._id };
             });
             setMainCategories(fetchMainCategories)
         },
         onError: (err) => {
-            console.error(err)
+            
         }
     })
 
@@ -137,7 +135,7 @@ const AddProduct = () => {
         setSubCategories(fetchSubCategories);
       },
       onError: (err) => {
-        console.error(err);
+        
       },
     }
   );
@@ -175,19 +173,14 @@ const AddProduct = () => {
                     // handle image Cover
                     const handleImageChange = (event) => {
                         const file = event.target.files[0];
-                        console.log(event.target.files)
                         if (file) {
                             const reader = new FileReader();
                             setImageCover(file)
-
                             reader.onloadend = () => {
-                                // initialValues.imageCover = imageCoverCopy
                                 setImageCovershow(reader.result)
-                                console.log("imageCover", imageCoverCopy)
-
                             };
-                            // console.log(profilePicture,"prrrrrrrrr")
-                            reader.readAsDataURL(file); // Read the file as a data URL
+                            
+                            reader.readAsDataURL(file); 
                         }
                     };
 
@@ -197,7 +190,7 @@ const AddProduct = () => {
                     }
                     // handle Images 
                     const handleImagesChange = (event) => {
-                        console.log(event.target.files[0])
+                        
                         const file = event.target.files[0];
                         if (file) {
                             const reader = new FileReader();
@@ -217,8 +210,6 @@ const AddProduct = () => {
                         setImages(prevFiles => prevFiles.filter((_, index) => index !== idxtoremove));
                     };
                     const chooseCategory = (e) => {
-                        console.log(e.target.value)
-                        console.log(e.target)
                         setFieldValue('category', e.target.value)
 
                         setCategoryId(e.target.value)
@@ -227,9 +218,9 @@ const AddProduct = () => {
                         if (values.discount && values.price) {
                             if (values.price > 0 && values.discount >= 0 && values.discount <= 90) {
                                 let discountedPrice = values.price - ((values.discount / 100) * values.price)
-                                console.log(discountedPrice)
+                                
                                 setFieldValue('priceAfterDisc', discountedPrice)
-                                console.log("Valid values");
+                                
                             }
                         }
                     }
@@ -447,7 +438,7 @@ const AddProduct = () => {
 
                                             }}>
                                                 {
-                                                    // console.log(multiImagesCopyShow,"mmmmmm")
+                                                    
                                                     multiImagesCopyShow.map((image, index) => (
                                                         <div
                                                             key={index}
