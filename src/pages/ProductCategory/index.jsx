@@ -2,162 +2,219 @@ import React, { useEffect, useState } from "react";
 import styles from "./productCategory.module.css";
 import Header from "../../components/Title/Header";
 import ProductCard from "../../components/productCard/ProductCard";
-import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import axios from "axios";
 import productCat from "../../assets/productCat.avif";
+import toast from "react-hot-toast";
+import { addToWishlist } from "../../redux/wishlistSlice";
+import Sidebar from "../../components/ProductCategory/Sidebar";
 
 const ProductCategory = () => {
     const [products, setProducts] = useState([]);
-    const fetchProducts = async () => {
-        const response = await axios.get("http://localhost:3000/api/v1/products");
-        const data = await response.data.data.documents;
-        console.log(response.data.data.documents);
-        setProducts(data);
-        console.log(products);
+    const [filteredProducts, setFilteredProducts] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const dispatch = useDispatch();
+
+    const location = useLocation(); // Get location object
+    const selectedSubcategoryId = location.state?.subcategoryId;
+    const search = location.state?.searchValue
+
+    // Fetch products based on the current page
+    const fetchProducts = async (page) => {
+        try {
+            let url;
+
+            if (selectedSubcategoryId) {
+                // Fetch products by subcategory
+                url = `http://localhost:3000/api/v1/subcategories/${selectedSubcategoryId}/products/subcategory`;
+            } else if (search) {
+                // Fetch products by category if subcategory is not selected
+                url = `http://localhost:3000/api/v1/products?keyword=${search}`;
+            } else {
+                // Fetch all products if no specific category or subcategory is selected
+                url = `http://localhost:3000/api/v1/products?page=${page}&limit=9`;
+            }
+            const response = await axios.get(
+                `${url}`,
+            );
+            const data = response.data.data.documents;
+            setProducts(data);
+            setTotalPages(response.data.paginateResult.NumOfPages || 1);
+            console.log("setTotalPages is", response.data.paginateResult.NumOfPages);
+        } catch (error) {
+            console.error("Error fetching products:", error);
+        }
     };
+
+    const queryClient = useQueryClient();
+    const handleAddToWishlist = async (productToAdd) => {
+        try {
+            await axios.post(
+                "http://localhost:3000/api/v1/wishlist",
+                { productId: productToAdd._id },
+                { withCredentials: true }
+            );
+            dispatch(addToWishlist(productToAdd));
+            queryClient.refetchQueries("wish length");
+            toast.success("Product added to Wishlist");
+        } catch (error) {
+            console.error("Error adding product to Wishlist:", error);
+            toast.error("Failed to add product to Wishlist");
+        }
+    };
+
+
+    const handleProductsFetch = (filteredProducts) => {
+        setFilteredProducts(filteredProducts);
+    };
+
+    const handlePageChange = (newPage) => {
+        if (newPage > 0 && newPage <= totalPages) {
+            setCurrentPage(newPage);
+        }
+    };
+
     useEffect(() => {
-        fetchProducts();
-    }, []);
+        fetchProducts(currentPage);
+    }, [currentPage]);
+
+    useEffect(() => {
+        fetchProducts(selectedSubcategoryId); // Fetch products based on subcategory or all if none
+    }, [selectedSubcategoryId,search]);
 
     return (
         <div>
-            <Header title={"Product"} details={"Home > Product"} imgPath={productCat} />
+            {/* Page header */}
+            <Header
+                title={"Product"}
+                details={"Home > Product"}
+                imgPath={productCat}
+            />
 
             <div className="container mt-4">
                 <div className="row">
-                    {/* Sidebar */}
+                    {/* Sidebar Component */}
                     <div className="col-md-3">
-                        <div className="card">
-                            <div className="card-body">
-                                <h5>Category</h5>
-                                <ul className="list-unstyled">
-                                    <li>Dress</li>
-                                    <li>Accessories</li>
-                                    <li>Baby & Kids</li>
-                                    <li>Shoes</li>
-                                    <li>Jewelry</li>
-                                </ul>
-                                <h5>Price</h5>
-                                <ul className="list-unstyled">
-                                    <li>
-                                        <input type="radio" name="price" /> Under $20
-                                    </li>
-                                    <li>
-                                        <input type="radio" name="price" /> $50-100
-                                    </li>
-                                    <li>
-                                        <input type="radio" name="price" /> $55-110
-                                    </li>
-                                    <li>
-                                        <input type="radio" name="price" /> $60-100
-                                    </li>
-                                    <li>
-                                        <input type="radio" name="price" /> $60-120
-                                    </li>
-                                </ul>
-                                <h5>Color</h5>
-                                <div>
-                                    <span className="badge bg-danger me-1">&nbsp;</span>
-                                    <span className="badge bg-secondary me-1">&nbsp;</span>
-                                    <span className="badge bg-warning me-1">&nbsp;</span>
-                                </div>
-                                <h5 className="mt-4">Size</h5>
-                                <ul className="list-unstyled ">
-                                    <li>
-                                        <input type="checkbox" /> M
-                                    </li>
-                                    <li>
-                                        <input type="checkbox" /> S
-                                    </li>
-                                    <li>
-                                        <input type="checkbox" /> L
-                                    </li>
-                                    <li>
-                                        <input type="checkbox" /> XL
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
+                        <Sidebar onProductsFetch={handleProductsFetch} />
                     </div>
 
                     {/* Product Grid */}
                     <div className="col-md-9">
-                        <div className="row">
-                            <form className="d-flex">
-                                <input
-                                    type="text"
-                                    className="form-control me-2"
-                                    id="search"
-                                    placeholder="Product.."
-                                />
-                                <button
-                                    type="submit"
-                                    className="btn  text-white"
-                                    style={{
-                                        backgroundColor: "#EF9E86",
-                                        borderRadius: "5px",
-                                    }}
-                                >
-                                    Search
-                                </button>
-                            </form>
-                        </div>
+                
 
+                        {/* Product display */}
                         <div className="row">
                             <div className={`container ${styles.productsCollection}`}>
-                                {products.map(
-                                    (product, i) =>
-                                        i < 8 && (
+                                {(filteredProducts.length > 0 ? filteredProducts : products).map(
+                                    (product) => (
+                                        <div
+                                            key={product._id}
+                                            className={styles.productSellerContainer}
+                                        >
                                             <ProductCard
-                                                key={product.id}
+                                                id={product._id}
                                                 className={styles.product}
                                                 title={product.title}
                                                 price={Math.round(product.price)}
-                                                rate={Math.round(product.rating)}
+                                                rate={Math.round(product.ratingsAverage)}
                                                 img={product.imageCover}
+                                                priceAfterDisc={product.priceAfterDisc}
+                                                onAddToWishlist={() => handleAddToWishlist(product)}
                                             />
-                                        )
+                                        </div>
+                                    )
                                 )}
                             </div>
                         </div>
 
 
-                    </div>
+                        {/* Pagination controls */}
+                        <div className="row mt-4">
+                            <div className="col-12 d-flex justify-content-between">
+                                <button
+                                    className="btn btn-outline-secondary"
+                                    onClick={() => handlePageChange(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                >
+                                    Previous
+                                </button>
 
-                    <div className="row text-center ">
-                        <div className="col-2">
-                            <img src={require('../../assets/Nike-Logo.jpg')} alt="Adidas" className={`img-fluid ${styles.fixedSizeImg}`} />
-                        </div>
-                        <div className="col-2">
-                            <img src={require('../../assets/Dior_Logo.svg.png')} alt="Dior" className={`img-fluid ${styles.fixedSizeImg}`} />
-                        </div>
-                        <div className="col-2">
-                            <img src={require('../../assets/Gucci-Logo.png')} alt="Gucci" className={`img-fluid ${styles.fixedSizeImg}`} />
-                        </div>
-                        <div className="col-2">
-                            <img src={require('../../assets/Givenchy_logo.jpg')} alt="Givenchy" className={`img-fluid ${styles.fixedSizeImg}`} />
-                        </div>
-                        <div className="col-2">
-                            <img src={require('../../assets/town-team-logo.avif')} alt="Givenchy" className={`img-fluid ${styles.fixedSizeImg}`} />
-                        </div>
-                        <div className="col-2">
-                            <img src={require('../../assets/Nike-Logo.jpg')} alt="Givenchy" className={`img-fluid ${styles.fixedSizeImg}`} />
-                        </div>
-                    </div>
+                                <span>
+                                    Page {currentPage} of {totalPages}
+                                </span>
 
-                    <div className="row text-center">
-                        <div className={`container ${styles.productsCollection}`}>
-                            {products.map((product, i) =>
-                                i < 4 && (
-                                    <div key={product.id}>
-                                        <img src={product.images} alt={product.title} className={`img-fluid ${styles.fixedSizeImg}`} />
-                                    </div>
-                                )
-                            )}
+                                <button
+                                    className="btn btn-outline-secondary"
+                                    onClick={() => handlePageChange(currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Next
+                                </button>
+                            </div>
                         </div>
                     </div>
+                </div>
 
+                {/* Brands Section */}
+                <div className="row text-center mt-5">
+                    <div className="col-2">
+                        <img
+                            src={require("../../assets/Nike-Logo.jpg")}
+                            alt="Nike"
+                            className={`img-fluid ${styles.fixedSizeImg}`}
+                        />
+                    </div>
+                    <div className="col-2">
+                        <img
+                            src={require("../../assets/puma-logo-9869295F1B-seeklogo.com.png")}
+                            alt="Puma"
+                            className={`img-fluid ${styles.fixedSizeImg}`}
+                        />
+                    </div>
+                    <div className="col-2">
+                        <img
+                            src={require("../../assets/Dior_Logo.svg.png")}
+                            alt="Dior"
+                            className={`img-fluid ${styles.fixedSizeImg}`}
+                        />
+                    </div>
+                    <div className="col-2">
+                        <img
+                            src={require("../../assets/Gucci-Logo.png")}
+                            alt="Gucci"
+                            className={`img-fluid ${styles.fixedSizeImg}`}
+                        />
+                    </div>
+                    <div className="col-2">
+                        <img
+                            src={require("../../assets/Givenchy_logo.jpg")}
+                            alt="Givenchy"
+                            className={`img-fluid ${styles.fixedSizeImg}`}
+                        />
+                    </div>
+                    <div className="col-2">
+                        <img
+                            src={require("../../assets/town-team-logo.avif")}
+                            alt="Town Team"
+                            className={`img-fluid ${styles.fixedSizeImg}`}
+                        />
+                    </div>
+                </div>
 
+                {/* Additional Products Section */}
+                <div className="row text-center mt-5">
+                    <div className={`container ${styles.productsCollection}`}>
+                        {products.slice(0, 3).map((product) => (
+                            <div key={product._id}>
+                                <img
+                                    src={product.imageCover}
+                                    alt={product.title}
+                                    className={`img-fluid mb-5 ${styles.fixedSizePic}`}
+                                />
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>

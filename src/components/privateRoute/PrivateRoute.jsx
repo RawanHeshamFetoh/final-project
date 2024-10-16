@@ -1,19 +1,12 @@
-import React, { useEffect, useState } from 'react'
-import { useSelector } from 'react-redux'
-import { Outlet, useNavigate } from 'react-router-dom'
+
+import Cookies from 'js-cookie';
+import toast from 'react-hot-toast';
+import { Outlet, Navigate } from 'react-router-dom';
 
 function PrivateRoute() {
+    const userId = Cookies.get('userId')
 
-    const navigate = useNavigate()
-    const user_id = useSelector((state) =>  state.user.userId)
-    useEffect(() => {
-        if (!user_id) {
-            navigate("/"); // Redirect to home if userId is not found
-        }
-    }, [user_id, navigate]);
-
-    return user_id ? <Outlet/> : null
-    
+    return userId ? <Outlet /> : <Navigate to="/login" />
 }
 
-export default PrivateRoute
+export default PrivateRoute

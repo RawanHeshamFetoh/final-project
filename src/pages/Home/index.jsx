@@ -10,8 +10,10 @@ import ReviewCard from '../../components/reviewCard/reviewCard';
 import BlogCard from '../../components/blogCard/blogCard';
 import ProductSlider from '../../components/slider/productSlider';
 import styless from '../About/about.module.css'
-import { useQuery } from 'react-query';
-
+import { useQuery, useQueryClient } from 'react-query';
+import { useDispatch } from 'react-redux';
+import toast from 'react-hot-toast';
+import { addToWishlist } from "../../redux/wishlistSlice";
 const Home = () => {
   const [products, setProducts] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -57,6 +59,27 @@ const Home = () => {
       console.log(res.data.documents, "full")
     },
   });
+
+  const dispatch = useDispatch();
+  const queryClient = useQueryClient();
+  const handleAddToWishlist = async (productToAdd) => {
+    try {
+        // Send the product to the server
+        await axios.post(
+            "http://localhost:3000/api/v1/wishlist",
+            { productId: productToAdd }, // Send the product details to the server
+            { withCredentials: true }
+        );
+
+        // Dispatch the action to update the wishlist in Redux
+        dispatch(addToWishlist(productToAdd));
+        queryClient.refetchQueries("wish length");
+        toast.success("Product added to Wishlist");
+    } catch (error) {
+        console.error("Error adding product to Wishlist:", error);
+        toast.error("please Login First");
+    }
+};
   return (
     <div>
       {/* Header */}
@@ -116,7 +139,7 @@ const Home = () => {
           products.map((product, i) => (
             (i < 8) && (
               <div className={styles.productSellerContainer}>
-                <ProductCard key={product._id} id={product._id} className={styles.product} title={product.title} price={Math.round(product.price)} rate={product.ratingsAverage} img={product.imageCover} priceAfterDisc={product.priceAfterDisc} />
+                <ProductCard key={product._id} onAddToWishlist={() => handleAddToWishlist(product)} id={product._id} className={styles.product} title={product.title} price={Math.round(product.price)} rate={product.ratingsAverage} img={product.imageCover} priceAfterDisc={product.priceAfterDisc} />
               </div>
             )
           ))

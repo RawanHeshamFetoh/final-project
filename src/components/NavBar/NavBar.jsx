@@ -1,30 +1,100 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import styles from './navbar.module.css'
-import { NavLink } from 'react-router-dom'
-import { useSelector } from 'react-redux';
+import { NavLink, useNavigate } from 'react-router-dom'
 import Cookies from 'js-cookie';
+import CategoryNav from '../categoeyNav/CategoryNav';
+import axios from 'axios';
+import { useMutation, useQuery } from 'react-query';
+import { useLocation } from "react-router-dom";
+import toast from 'react-hot-toast';
 const NavBar = () => {
-    // const userId = useSelector((state) => state.user.userId);
     const userId = Cookies.get('userId')
+    const [searchValue, setSearchValue] = useState('')
+    const [cartLength, setCartLength] = useState('')
+    const [wishlistLength, setWishListLength] = useState('')
+    const handleSearchChange = (e) => {
+        setSearchValue(e.target.value); // Correctly setting the state with the input value
+    };
+    const navigate = useNavigate()
+    const handleSearch = () => {
+        navigate('/ProductCategory', { state: { subcategoryId: null, searchValue } });
+        console.log(searchValue)
+    }
+    const getUserCart = async () => {
+        const response = await axios.get('http://localhost:3000/api/v1/cart/', {
+            withCredentials: true,
+        })
+        return response.data
+    }
+    const { refetch } = useQuery("cart length", getUserCart, {
+        refetchOnWindowFocus: true,
+        retry: false,
+        // refetchInterval: 1000,  
+
+        onSuccess: (res) => {
+            setCartLength(res.data.cartItems.length)
+            console.log(res.data.cartItems.length, "cart nav")
+        },
+        onError: (err) => {
+            setCartLength(0)
+            console.log(err)
+        }
+    })
+    const getWishList = async () => {
+        const response = await axios.get('http://localhost:3000/api/v1/wishlist/', {
+            withCredentials: true,
+        })
+        return response.data
+    }
+    const { refetch: wishListRefetch } = useQuery("wish length", getWishList, {
+        refetchOnWindowFocus: true,
+        retry: false,
+        // refetchInterval: 1000,  
+        onSuccess: (res) => {
+            setWishListLength(res.data.length)
+            console.log(res.data.length, "wish nav")
+        },
+        onError: (err) => {
+            setCartLength(0)
+            console.log(err)
+        }
+    })
+    useEffect(() => {
+        refetch();
+        wishListRefetch()
+    }, [cartLength, wishlistLength]);
+    const role = Cookies.get('role')
+    const logOutUser = async () => {
+        const response = await axios.get("http://localhost:3000/api/v1/auth/sign-out", {
+            withCredentials: true
+        })
+        return response.data
+    }
+    const mutation = useMutation(logOutUser, {
+        onSuccess: (res) => {
+            toast.success("log out successfully!");
+            Cookies.remove('userId')
+            Cookies.remove('access_token');
+            Cookies.remove('logedWith');
+            Cookies.remove('role');
+            navigate("/login")
+            console.log(res)
+
+        },
+        onError: (error) => {
+            toast.error("There is some thing wrong. Please try again.");
+            console.error(error.message);
+        }
+    });
+    const handleLogoOut = () => {
+        mutation.mutate();
+    }
     return (
         <div className={styles.nav}>
             <div className={styles.firstNav}>
                 <div className={`container ${styles.firstNavContainer} ${styles.flexContainer}`}>
                     <p>new offers this month only to get 20% free</p>
-                    {/* <div className='d-flex justify-content-between'>
-                        <select name="country" id="language">
-                            <option value="usd" selected> usd</option>
-                            <option value="egypt"> egypt</option>
-                        </select>
-                        <select name="language" id="language">
-                            <option value="arabic"> arabic</option>
-                            <option value="english" selected> english</option>
-                        </select>
-                        <div className={styles.firstNavIcon}>
-                            <div><i className="fa-brands fa-facebook-f"></i></div>
-                            <div><i className="fa-brands fa-instagram"></i></div>
-                        </div>
-                    </div> */}
+                    {userId ?<i class="fa-solid fa-arrow-right-from-bracket" style={{fontSize:'18px', cursor:'pointer'}} onClick={handleLogoOut}></i> : ""}
                 </div>
             </div>
 
@@ -35,36 +105,40 @@ const NavBar = () => {
                     {/* <div className={styles.flexContainer}> */}
                     <div className={styles.flexContainer}>
                         <div className={styles.search}>
-                            {/* <select name="categories" id="categories">
-                                <option value="women"> women</option>
-                                <option value="men" selected> men</option>
-                            </select> */}
-                            <input type="text" name="search" id="search" placeholder='search your product' />
+                            <input type="text" name="search" id="search" placeholder='search your product' onChange={handleSearchChange} />
                         </div>
-                        <button>search</button>
+                        <button onClick={handleSearch}>search</button>
+                    </div>
+                    {userId ?
+                        (<div className={`${styles.flexContainer} ${styles.navIcon}`}>
+                            <div><NavLink to={`/profile/${userId}`}> <i className="fa-regular fa-user"></i> </NavLink></div>
+                            {role !== 'seller' ? (
+                                <div className={`${styles.flexContainer}`}>
+                                    <NavLink to={"/WishlistPage"}>
+                                        <div className="position-relative">
+                                            <i className="fa-regular fa-heart"></i>
+                                            <span className="position-absolute top-0 translate-middle bg-danger  rounded-circle">
+                                                <span>{wishlistLength || 0}</span>
+                                            </span>
+                                        </div>
+                                    </NavLink>
+                                    <NavLink to={"/CartPage"}>
+                                        <div className="position-relative">
+                                            <i className="fa-solid fa-shopping-cart "></i>
+                                            <span className="position-absolute top-0  translate-middle bg-danger  rounded-circle">
+                                                <span>{cartLength || 0}</span>
+                                            </span>
+                                        </div>
+                                    </NavLink>
+                                </div>
+                            ) : ''}
+                        </div>) :
+                        (<div className={`${styles.flexContainer} ${styles.navIcon}`}>
+                            <div><NavLink to={`/login`} className={styles.loginBtns}> login </NavLink></div>
+                            <div><NavLink to={`/signUp`} className={styles.loginBtns}> sign up </NavLink></div>
                         </div>
-                        {userId ?
-                            (<div className={`${styles.flexContainer} ${styles.navIcon}`}>
-                                <div><NavLink to={`/profile/${userId}`}> <i className="fa-regular fa-user"></i> </NavLink></div>
-                                <div className='position-relative'>
-                                    <i className="fa-regular fa-heart"></i>
-                                    <span className="position-absolute top-0 translate-middle bg-danger  rounded-circle">
-                                        <span >10</span>
-                                    </span>
-                                </div>
-                                <div className='position-relative'>
-                                    <i className="fa-solid fa-shopping-cart "></i>
-                                    <span className="position-absolute top-0  translate-middle bg-danger  rounded-circle">
-                                        <span >10</span>
-                                    </span>
-                                </div>
-                            </div>) :
-                            (<div className={`${styles.flexContainer} ${styles.navIcon}`}>
-                                <div><NavLink to={`/login`} className={styles.loginBtns}> login </NavLink></div>
-                                <div><NavLink to={`/signUp`} className={styles.loginBtns}> sign up </NavLink></div>
-                            </div>
-                            )
-                        }
+                        )
+                    }
                     {/* </div> */}
                 </div>
             </div>
@@ -72,11 +146,9 @@ const NavBar = () => {
             <nav className={`navbar navbar-expand-lg py-0  ${styles.thirdNav}`}>
                 <div className={`container ${styles.flexContainer}`}>
                     <div className={styles.selectCategories}>
-                        <select name="categories" id="categories">
-                            <option value="allCategories" selected> all categories</option>
-                            <option value="women"> women</option>
-                            <option value="men" > men</option>
-                        </select>
+                        <div className={`${styles.categoryDropdown}`}>
+                            <CategoryNav />
+                        </div>
                     </div>
                     <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                         <span className="navbar-toggler-icon"></span>
@@ -86,16 +158,10 @@ const NavBar = () => {
                             <li className="nav-item">
                                 <NavLink className={({ isActive }) => `${isActive ? styles.activeLink : ''} ${styles.navLinkColor}`} to="/">Home</NavLink>                            </li>
                             <li className="nav-item">
-                                <NavLink className={({ isActive }) => `${isActive ? styles.activeLink : ''} ${styles.navLinkColor}`} aria-current="page" to="/about">about us</NavLink>
+                                <NavLink className={({ isActive }) => `${isActive ? styles.activeLink : ''} ${styles.navLinkColor}`} to="/about">about us</NavLink>
                             </li>
                             <li className="nav-item">
-                                <NavLink className={` ${styles.navLinkColor}`} aria-current="page" to="#">pages</NavLink>
-                            </li>
-                            <li className="nav-item">
-                                <NavLink className={` ${styles.navLinkColor}`} aria-current="page" to="#">shop</NavLink>
-                            </li>
-                            <li className="nav-item">
-                                <NavLink className={` ${styles.navLinkColor}`} aria-current="page" to="#">blog</NavLink>
+                                <NavLink className={({ isActive }) => `${isActive ? styles.activeLink : ''} ${styles.navLinkColor}`} to="/ProductCategory">shop</NavLink>
                             </li>
                             <li className="nav-item">
                                 <NavLink
@@ -118,6 +184,8 @@ const NavBar = () => {
                     </div>
                 </div>
             </nav>
+
+
         </div>
     )
 }

@@ -170,7 +170,8 @@
 }
 
 .navLink ul{
-    margin-left: 20%;
+    /* margin-left: 20%; */
+    margin: 0 auto;
 }
 .navLinkColor {
     color:rgb(255, 255, 255,.5)  !important;
@@ -183,6 +184,21 @@
 .activeLink{
     color: white !important;
     font-size: 16px;
+    padding: 0 10px;
+}
+@media (max-width: 992px) {
+    .activeLink{
+        background-color: white !important;
+        color: #f46f46 !important;
+        display: inline-block;
+        width: 100%;
+        margin: 7px 0;
+        padding: 5px !important;
+    }
+    .call{
+        margin-bottom: 15px;
+    }
+
 }
 .call {
     color: white;
@@ -228,4 +244,93 @@
         font-size: 13px;
         padding: 0 10px;
     }
+}
+
+/* category */
+/* .categoryDropdown {
+    position: relative;
+}
+
+.categoryItem {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.subCategoryDropdown {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ccc;
+    width: 200px;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+}
+
+.subCategoryItem {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.subCategoryItem:hover {
+    background-color: #f0f0f0;
+} */
+/* Style for main category dropdown */
+/* Style for main category dropdown */
+.categoryDropdown {
+    position: relative;
+    width: 200px;
+}
+
+.categoryDropdownToggle {
+    padding: 10px;
+    background-color: white;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.categoriesDropdownMenu {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ccc;
+    width: 100%;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    border-radius: 4px;
+}
+
+.categoryItem {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+}
+
+.categoryItem:hover {
+    background-color: #f0f0f0;
+}
+
+/* Subcategory dropdown styling */
+.subCategoryDropdown {
+    background-color: white;
+    border: 1px solid #ccc;
+    width: 200px;
+    margin-top: 10px;
+    z-index: 1000;
+    border-radius: 4px;
+}
+
+.subCategoryItem {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+}
+
+.subCategoryItem:hover {
+    background-color: #f0f0f0;
 }

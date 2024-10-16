@@ -58,7 +58,7 @@ const SignUp = () => {
     };
     const validationSchema = Yup.object({
         email: Yup.string().email("invalid email").required("required"),
-        username: Yup.string().required("required").min(3, " invalid user name"),
+        username: Yup.string().required("required").min(3, " invalid user name").matches(/^[a-zA-Z0-9]([._]?[a-zA-Z0-9]+){2,19}$/, 'Invalid username.'),
         password: Yup.string()
             .required("required")
             .matches(

@@ -4,10 +4,10 @@ import { useQuery } from 'react-query'
 import axios from 'axios'
 import { useParams } from 'react-router-dom'
 import Cookies from 'js-cookie'
-const CheckoutCart = ({ shippingCost, img, onCartIdChange, order, cartProduct }) => {
+const CheckoutCart = ({ shippingCost, totalPriceDiscount, onCartIdChange, order, cartProduct }) => {
     // get Cart data 
     const [cart, setCart] = useState([])
-    const [sellerTotalRevenue , setTotalRevenue] = useState(0)
+    const [sellerTotalRevenue, setTotalRevenue] = useState(0)
     // const [cartId, setCartId]=useState('')
     const getCart = async () => {
         const response = await axios.get('http://localhost:3000/api/v1/cart/', {
@@ -22,7 +22,7 @@ const CheckoutCart = ({ shippingCost, img, onCartIdChange, order, cartProduct })
             // setCartId(res.data._id)
             cartProduct(res.data.cartItems)
             onCartIdChange(res.data._id)
-            console.log(res.data)
+            console.log("carttt", res.data._id)
         },
         onError: (error) => {
             console.log(error)
@@ -45,16 +45,16 @@ const CheckoutCart = ({ shippingCost, img, onCartIdChange, order, cartProduct })
                 setCart(res.data)
             } else {
                 const userId = Cookies.get('userId')
-                
+
                 const filterCartItem = res.data.cartItems.filter(item =>
                     item.product && item.product.sellerId && item.product.sellerId._id === userId)
                 const sellerOrder = {
                     ...res.data,
                     cartItems: filterCartItem
                 }
-                let sellerRevenue =0 
+                let sellerRevenue = 0
                 filterCartItem.forEach(item => {
-                    sellerRevenue += item.price 
+                    sellerRevenue += item.price
                 })
                 setTotalRevenue(sellerRevenue)
                 console.log(sellerOrder, "fillter")
@@ -93,7 +93,7 @@ const CheckoutCart = ({ shippingCost, img, onCartIdChange, order, cartProduct })
                                                 <p>{item.price} $</p>
                                             </td>
                                         </tr>
-                                        
+
                                     )
                                 })}
                             </tbody>
@@ -102,33 +102,39 @@ const CheckoutCart = ({ shippingCost, img, onCartIdChange, order, cartProduct })
                         {
                             !seller ? (
 
-                        <div className={styles.pricesContainer}>   
-                        <div className={styles.cartCheckoutprice}>
-                            <p>subtotal</p>
-                            <p>{cart.totalCartPrice || cart.totalOrderPrice - cart.shippingPrice} $</p>
-                        </div>
-        
-                        <div className={styles.cartCheckoutprice}>
-                            <p>shipping</p>
-                            <p>{shippingCost || cart.shippingPrice}$</p>
-                        </div>
-                        <div className={styles.cartCheckoutprice}>
-                            <p>total</p>
-                            <p>{cart.totalCartPrice + shippingCost || cart.totalOrderPrice} $</p>
-                        </div>
-                        {
-                            cart.totalPriceAfterDiscount && (<div>
-                                <p>total After discount</p>
-                                <p>{cart.totalPriceAfterDiscount + shippingCost || cart.totalOrderPrice} $</p>
-                            </div>)
+                                <div className={styles.pricesContainer}>
+                                    <div className={styles.cartCheckoutprice}>
+                                        <p>subtotal</p>
+                                        <p>{cart.totalCartPrice || cart.totalOrderPrice - cart.shippingPrice} $</p>
+                                    </div>
+
+                                    <div className={styles.cartCheckoutprice}>
+                                        <p>shipping</p>
+                                        <p>{shippingCost || cart.shippingPrice}$</p>
+                                    </div>
+                                    <div className={styles.cartCheckoutprice}>
+                                        <p>total</p>
+                                        <p>{cart.totalCartPrice + shippingCost || cart.totalOrderPrice} $</p>
+                                    </div>
+                                    {
+                                        // cart.totalPriceAfterDiscount && (<div className={styles.cartCheckoutprice} style={{border:'none'}}>
+                                        //     <p>total After discount</p>
+                                        //     <p>{cart.totalPriceAfterDiscount + shippingCost || cart.totalOrderPrice} $</p>
+                                        // </div>)
+                                        totalPriceDiscount && (
+                                            (<div className={styles.cartCheckoutprice} style={{ border: 'none' }}>
+                                                <p>total After discount</p>
+                                                <p>{totalPriceDiscount + shippingCost} $</p>
+                                            </div>)
+                                        )
+                                    }
+
+                                </div>)
+                                : (<div className={`${styles.cartCheckoutprice} ${styles.CheckoutCartSeller}`} >
+                                    <p>total</p>
+                                    <p>{sellerTotalRevenue || 0} $</p>
+                                </div>)
                         }
-                    
-                    </div> ) 
-                    :(<div className={`${styles.cartCheckoutprice} ${styles.CheckoutCartSeller}`} >
-                            <p>total</p>
-                            <p>{sellerTotalRevenue ||0} $</p>
-                        </div>)
-                }
 
                     </div >
                 ) : ('')

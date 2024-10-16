@@ -10,12 +10,10 @@ const Orders = () => {
         switch (status) {
             case 'pending':
                 return '#ED7A56';
-            case 'cancelled':
-                return 'red';
             case 'delivered':
                 return 'green';
             default:
-                return 'black'; // default color
+                return 'red'; // default color
         }
     };
     const { id } = useParams()
@@ -32,18 +30,13 @@ const Orders = () => {
         return response.data;
     }
     useQuery('get-order', getOrder, {
-
+        refetchOnWindowFocus: true, 
+        refetchInterval: 5000,  
         onSuccess: (res) => {
             if (!role) {
                 console.log(res.data)
                 setOrders(res.data)
             } else {
-                // const sellerorders= res.data.filter((order)=> order.cartItems.filter((item, i)=>{item.product.sellerId === userId}))
-                // const sellerOrder = res.data.cartItems.filter((item)=>item.products.sellerId === userId)
-                // const sellerOrders = res.data.map(order => ({
-                //     ...order,
-                //     cartItems: order.cartItems.filter(item => item.product.sellerId._id === userId)
-                //   })).filter(order => order.cartItems.length > 0);
                 const sellerOrders = res.data.map(order => ({
                     ...order,
                     cartItems: order.cartItems.filter(item =>
@@ -51,15 +44,14 @@ const Orders = () => {
                     )
                 })).filter(order => order.cartItems.length > 0);
                 setOrders(sellerOrders)
-                // console.log(sellerOrders, "selll")
-                // console.log(res.data)
-                // console.log(sellerOrders)
+
+
             }
         },
         onError: (error) => {
             console.log(error)
         },
-        // refetch every 5 minutes
+        
     })
     const changeDate = (dateToChange) => {
         const date = new Date(dateToChange);
@@ -96,9 +88,13 @@ const Orders = () => {
                                         </td>
                                     }
                                     <td>  {changeDate(order.createdAt)} </td>
-                                    <td style={{ color: getStatusColor('pending') }}>  pending </td>
+                                    <td style={{ color: getStatusColor(!order.isCanceled && !order.isDelivered ? 'pending' : order.isCanceled ? 'canceled ' :'delivered') }}>{!order.isCanceled && !order.isDelivered ? 'pending' : order.isCanceled ? 'canceled ' :'delivered' }   </td>
                                     <td>  {order.shippingAddress.city} </td>
-                                    <td>  {order.totalOrderPrice}$ </td>
+                                    <td>  {role==='seller' ? order.cartItems.reduce((total, cartItem) => {
+                                        
+                                        return total + cartItem.price;
+                                    }, 0):order.
+                                    totalOrderPrice }$ </td>
                                     <td>
                                         <button className={styles.viewButton} onClick={() => handleView(order._id)}>view</button>
                                     </td>
@@ -106,7 +102,7 @@ const Orders = () => {
                             )
                         })}
 
-                        
+
                     </table>
                 )
                     : ("")}

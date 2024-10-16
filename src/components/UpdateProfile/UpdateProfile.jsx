@@ -114,9 +114,10 @@ const UpdateProfile = () => {
         ]
     };
     const validationSchema = Yup.object({
-        username: Yup.string(),
+        username: Yup.string().matches(/^[a-zA-Z0-9]([._]?[a-zA-Z0-9]+){2,19}$/, 'Invalid username.').required('Username is required'),
         email: Yup.string().email('invalid email'),
-        phone: Yup.string().matches(/^\+?(\d{1,3})?[-.\s]?(\(?\d{1,4}?\)?)[-.\s]?(\d{1,4})[-.\s]?(\d{1,4})[-.\s]?(\d{1,9})$/, 'Invalid phone number'),
+        phone: Yup.string().matches(/^(010|011|015)\d{8}$/,"invalid phone number "),
+        // matches(/^\+?(\d{1,3})?[-.\s]?(\(?\d{1,4}?\)?)[-.\s]?(\d{1,4})[-.\s]?(\d{1,4})[-.\s]?(\d{1,9})$/, 'Invalid phone number'),
         profilePicture: Yup.mixed(),
         addresses: Yup.array()
             .of(

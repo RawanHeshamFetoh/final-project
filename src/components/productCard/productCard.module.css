@@ -56,7 +56,7 @@
 }
 @media (max-width:1400px) and (min-width:992px) {
     .productsBtn{
-        bottom: 25% ;
+        bottom: 30% ;
     }
     .productCardImgLayout button{
         font-size: 10px !important;

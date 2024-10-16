@@ -33,7 +33,16 @@ const OrderDetails = () => {
         return formattedDate
     }
     
-    
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'pending':
+                return '#ED7A56';
+            case 'delivered':
+                return 'green';
+            default:
+                return 'red'; // default color
+        }
+    };
     return (
         <div className={`container ${styles.orderDetailsContainer} `} >
 
@@ -43,6 +52,7 @@ const OrderDetails = () => {
             <div className={`${role === 'seller' ? styles.sellerOrder : styles.userOrder}`}>
                 {(role === 'seller' ) && 
                 <div className={styles.orderDetails}>
+                    <span class={`badge ${order.isPaid?'bg-success ':'bg-danger'}`} style={{marginBottom:"15px"}}>{order.isPaid? "Paid" :'Not Paid'}</span>
                     <div>
                         <div><p>user name  </p><p> {order.user.username}</p> </div>
                         <div><p> email  </p><p> {order.user.email} </p> </div>
@@ -51,7 +61,7 @@ const OrderDetails = () => {
                     <div>
                         <div><p> Order ID </p><p> {order._id}</p> </div>
                         <div><p> Order Date </p><p>{changeDate(order.createdAt)} </p> </div>
-                        <div><p> Order Status </p><p> Pending</p> </div>
+                        <div><p> Order Status </p><p style={{ color: getStatusColor(!order.isCanceled && !order.isDelivered ? 'pending' : order.isCanceled ? 'canceled ' :'delivered') }}> {!order.isCanceled && !order.isDelivered ? 'pending' : order.isCanceled ? 'canceled ' :'delivered' } </p> </div>
                     </div>
                     <div>
                         <div><p> details </p><p> {order.shippingAddress.details}</p> </div>

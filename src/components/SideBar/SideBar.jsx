@@ -11,7 +11,7 @@ const SideBar = () => {
     const userRole = Cookies.get('role')
     const loggedWith = Cookies.get('logedWith')
     console.log(userId)
-    const profileSubPaths = [`/profile/${userId}/reset-password`, `/profile/${userId}/add-product`, `/profile/${userId}/seller-products`,`/profile/${userId}/orders`,`/profile/${userId}/seller-dashboard`];
+    const profileSubPaths = [`/profile/${userId}/reset-password`, `/profile/${userId}/add-product`,`/profile/${userId}/update-product`, `/profile/${userId}/seller-products`,`/profile/${userId}/orders`,`/profile/${userId}/seller-dashboard`];
     const isOnProfileSubPath = profileSubPaths.some(subPath => location.pathname.includes(subPath));
     const navigate = useNavigate()
     const logOutUser = async () => {

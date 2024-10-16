@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Formik, Form } from 'formik'
 import * as Yup from 'yup'
 import styles from '../Login/login.module.css'
@@ -8,7 +8,9 @@ import CheckoutCart from '../../components/checkoutCart/CheckoutCart'
 import axios from 'axios'
 import { useMutation } from 'react-query'
 import toast from 'react-hot-toast'
-import {loadStripe} from '@stripe/stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import { useNavigate } from 'react-router-dom'
+import Cookies from 'js-cookie'
 const Checkout = () => {
     // shippingAddress: {
     //     details: String,
@@ -17,15 +19,22 @@ const Checkout = () => {
     //     postalCode: String,
     //   },
     const [cartId, setCartId] = useState(0);
-    const [products , setProducts]= useState([])
+    const [products, setProducts] = useState([])
+    const [copoun, setCoupon]=useState()
+    const [discountedTotal, setDiscountedTotal] = useState(null);
+    const navigate = useNavigate()
 
     const handleCartId = (id) => {
         setCartId(id);
     };
-    const handleCartProducts =(products)=>{
+    const handleCartProducts = (products) => {
         setProducts(products)
     }
-
+    // useEffect(() => {
+    //     if (!cartId) {
+    //         navigate('/');
+    //     }
+    // }, [cartId, navigate]);
     const egyptGovernorates = [
         { key: "choose your governorate", value: "" },
         { key: "Cairo", value: "Cairo" },
@@ -157,143 +166,136 @@ const Checkout = () => {
             city: "",
             postalCode: "",
         },
-        shippingPrice:"",
+        shippingPrice: "",
         copon: '',
-        paymentMethodType:''
+        paymentMethodType: ''
     }
     const validationSchema = Yup.object({
         shippingAddress: Yup.object({
-            details: Yup.string().required("Required").min(10, "invalidValue"),
-            phone: Yup.string().required("Required").matches(/^\+?(\d{1,3})?[-.\s]?(\(?\d{1,4}?\)?)[-.\s]?(\d{1,4})[-.\s]?(\d{1,4})[-.\s]?(\d{1,9})$/, 'Invalid phone number'),
+            details: Yup.string().required("Required").min(10, "invalidValue").trim(),
+            phone: Yup.string().required("Required").matches(/^(010|011|015)\d{8}$/,"invalid phone number "),
             city: Yup.string().required("Required"),
             postalCode: Yup.number().required("Required").min(10000, ' Zip code must be 5 number')
                 .max(99999, ' Zip code must be 5 number'),
         }),
-        paymentMethodType:Yup.string().required("Required"),
+        paymentMethodType: Yup.string().required("Required"),
 
     })
+    const userId = Cookies.get('userId') 
     const onSubmit = (values) => {
-        const updatedValue={...values,
-            shippingPrice:shippingCost
+        const updatedValue = {
+            ...values,
+            shippingPrice: shippingCost
         }
-        if(values.paymentMethodType === 'cash' || !values.paymentMethodType){
+        if (values.paymentMethodType === 'cash' || !values.paymentMethodType) {
             mutation.mutate(updatedValue)
+            navigate(`/profile/${userId}/orders`)
             console.log(updatedValue)
         }
-        if(values.paymentMethodType=== 'card'){
+        if (values.paymentMethodType === 'card') {
             cardMutation.mutate(products)
         }
     }
-    const handlecheckoutWithCash=async(data)=>{
-        const respone = await axios.post(`http://localhost:3000/api/v1/orders/${cartId}`,data,{
+    const handlecheckoutWithCash = async (data) => {
+        const respone = await axios.post(`http://localhost:3000/api/v1/orders/${cartId}`, data, {
             withCredentials: true,
         })
         return respone.data
     }
-    const mutation = useMutation(handlecheckoutWithCash,{
-        onSuccess:()=>{
+    const mutation = useMutation(handlecheckoutWithCash, {
+        onSuccess: () => {
             toast.success('your order is under processing')
         },
-        onError:()=>{
+        onError: () => {
             toast.error('something went wrong')
         }
     })
-    // const cardPayment = async()=>{
-    //     const stripe = await loadStripe('pk_test_51Q2apNRtt1tTdQQg9PbuS24EiGLRAV4z2eiCASEaT0ndTU0QTnijANIdr2R0Vv9mVfy9SGhNtP61h1DmQPLIvcim000xtDAbr2');
-    // }
-    console.log(products,"checkoutP")
-    // {
-    //     "shipping_price":100,
-    //     "line_items":[
-    //          {
-    //       "title": "Product 1",
-    //       "description": "This is a cool product",
-    //       "price": 100, // $20.00
-    //       "quantity": 1,
-    //       "imageCover":"https://images.unsplash.com/photo-1523275335684-37898b6baf30?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cHJvZHVjdHxlbnwwfHwwfHx8MA%3D%3D"
-    //     },
-    //     {
-    //       "title": "Product 2",
-    //       "description": "Another cool product",
-    //       "price": 100, // $15.00
-    //       "quantity": 1,
-    //       "imageCover":"https://burst.shopifycdn.com/photos/wrist-watches.jpg?width=1000&format=pjpg&exif=0&iptc=0"
-    //     }
-    //     ]
-    // }
-    
-    // console.log(bodydata,"bodydata")
-    const handlecheckoutWithCard = async(products)=>{
+    console.log(products, "checkoutP")
+
+
+
+    const data = {
+        shipping_price: shippingCost,
+        coupon:copoun,
+        line_items: products.map((product) => ({
+            title: product.product.title,
+            description: product.product.description,
+            price: product.price,
+            quantity: product.quantity,
+            imageCover: product.product.imageCover
+
+        }))
+    }
+    console.log("bodydata", data)
+
+
+
+
+    const handlecheckoutWithCard = async (products) => {
         // const body = { products };
-        const bodydata ={
-            shipping_price:shippingCost,
-            line_items:products.map((product)=>({
-                title:product.product.title,
-                description:product.product.description,
-                price: product.price,
-                quantity:product.quantity,
-                imageCover:product.product.imageCover
-    
-            }))
-        } 
-        const response = await axios.post(`http://localhost:3000/api/v1/orders/checkout-session/${cartId}`,bodydata,{
+
+        
+    const bodydata = {
+        shipping_price: shippingCost,
+        coupon:copoun,
+        line_items: products.map((product) => ({
+            title: product.product.title,
+            description: product.product.description,
+            price: product.price,
+            quantity: product.quantity,
+            imageCover: product.product.imageCover
+
+        }))
+    }
+
+        const response = await axios.post(`http://localhost:3000/api/v1/orders/checkout-session/${cartId}`, bodydata, {
             withCredentials: true,
-            headers:{
+            headers: {
                 "Content-Type": "application/json"
             }
-        
+
         })
         console.log(response)
         return response.data
+
     }
-    const cardMutation = useMutation(handlecheckoutWithCard,{
-        onSuccess:async(res)=>{
-        const stripe = await loadStripe('pk_test_51Q2apNRtt1tTdQQg9PbuS24EiGLRAV4z2eiCASEaT0ndTU0QTnijANIdr2R0Vv9mVfy9SGhNtP61h1DmQPLIvcim000xtDAbr2');
-        const result =await stripe.redirectToCheckout({ sessionId: res.session.id});
+
+
+
+    console.log("checkoutId", cartId)
+    const cardMutation = useMutation(handlecheckoutWithCard, {
+        onSuccess: async (res) => {
+            const stripe = await loadStripe('pk_test_51Q2apNRtt1tTdQQg9PbuS24EiGLRAV4z2eiCASEaT0ndTU0QTnijANIdr2R0Vv9mVfy9SGhNtP61h1DmQPLIvcim000xtDAbr2');
+            const result = await stripe.redirectToCheckout({ sessionId: res.session.id });
             toast.success('your order is under processing')
         },
-        onError:(err)=>{
+        onError: (err) => {
             // console.log(err)
             toast.error('something went wrong')
         }
     })
-    // const cards= async()=>{
-    //     const stripe = await loadStripe('pk_test_51Q2apNRtt1tTdQQg9PbuS24EiGLRAV4z2eiCASEaT0ndTU0QTnijANIdr2R0Vv9mVfy9SGhNtP61h1DmQPLIvcim000xtDAbr2');
-    //     const body={
-    //         products:products
-    //     }
-    //     const headers={
-    //         "Content-Type": "application/json"
-    //     }
-    //     const response = await fetch('http://localhost:3000/webhook-checkout',{
-    //         method:'POST',
-    //         body: JSON.stringify(body),
-    //         headers:headers
-    //     })
-    //     const session = await response.json();
-    //     const result = stripe.redirectToCheckout({
-    //         sessionId: session.id
-    //     })
-    // }
+
     //applay copon
-    const applayCopon = async(copon)=>{
-        
-        const response = await axios.put(`http://localhost:3000/api/v1/cart/applyCoupon`,copon,{
+    const applayCopon = async (copon) => {
+
+        const response = await axios.put(`http://localhost:3000/api/v1/cart/applyCoupon`, copon, {
             withCredentials: true,
         })
         return response.data;
     }
-    const coponMutation = useMutation(applayCopon,{
-        onSuccess:(res)=>{
-            console.log(res.data,"cooooooooo")
+    const coponMutation = useMutation(applayCopon, {
+        onSuccess: (res) => {
+            
+            setDiscountedTotal(res.data.totalPriceAfterDiscount);
             toast.success('your coupon is applied successfully')
         },
-        onError:()=>{
+        onError: () => {
             toast.error('something went wrong')
         }
     })
-    const handleApplayCopon =(copon)=>{
-        let data = {coupon:copon}
+    const handleApplayCopon = (copon) => {
+        let data = { coupon: copon }
+        setCoupon(copon)
         coponMutation.mutate(data)
     }
 
@@ -303,7 +305,7 @@ const Checkout = () => {
         <div className={` ${style.checkout}`}>
             <h3>billing details</h3>
             <div>
-                
+
                 <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={onSubmit}>
                     {
                         formik => {
@@ -361,7 +363,7 @@ const Checkout = () => {
                                         </div>
                                     </div>
                                     <div>
-                                        <CheckoutCart shippingCost={shippingCost} img={require('../../assets/pr11.png')} onCartIdChange={handleCartId} order={false} cartProduct={handleCartProducts}/>
+                                        <CheckoutCart shippingCost={shippingCost} totalPriceDiscount={discountedTotal} onCartIdChange={handleCartId} order={false} cartProduct={handleCartProducts} />
                                         <div>
                                             <FormController
                                                 control='radio'
@@ -378,9 +380,9 @@ const Checkout = () => {
                                                 name="copon"
                                                 placeholder="copon"
                                                 className={styles.input}
-                                                
+
                                             />
-                                            <button type='button' className={styles.submit} onClick={()=>handleApplayCopon(formik.values.copon)}>applay copon {formik.values.copon}</button>
+                                            <button type='button' className={styles.submit} onClick={() => handleApplayCopon(formik.values.copon)}>applay copon</button>
                                         </div>
 
                                         <button type="submit" className={styles.submit}>checkout</button>

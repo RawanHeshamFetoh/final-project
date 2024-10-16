@@ -82,3 +82,13 @@
         bottom: 15% !important;
     } ;
 }
+@media (max-width:890px) {
+    .productsBtn{
+        bottom: 30% !important;
+    }
+}
+@media (max-width:767px) {
+    .productsBtn{
+        bottom: 15% !important;
+    }
+}

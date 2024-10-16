@@ -17,6 +17,7 @@ function App() {
                 </Router>
                 <Toaster position='top center' />
             {/* </Provider> */}
+            {/* document.getElementById('root') */}
         </QueryClientProvider>
     );
 }
